@@ -10,9 +10,8 @@
 # @raycast.icon 🧽
 
 # Documentation:
-# @raycast.description Clears the system clipboard contents.
+# @raycast.description Wipe the clipboard
 # @raycast.author Perikles
 # @raycast.authorURL https://github.com/AnilBurcu
 
-# Clear system clipboard
 pbcopy < /dev/null

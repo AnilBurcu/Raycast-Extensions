@@ -1,59 +1,31 @@
-# Raycast Script Commands
+# raycast-scripts
 
-A collection of useful macOS script commands for [Raycast](https://raycast.com).
+My Raycast script commands. Mostly stuff I got tired of doing manually.
 
-## Scripts
+## What's in here
 
-### System
+- **brew-maintenance.sh** -- update + upgrade + cleanup homebrew in one go
+- **dev-cache-clean.sh** -- nuke npm/watchman/metro/cocoapods/xcode/gradle caches
+- **clear-copyboard.sh** -- wipe the clipboard
+- **flush-dns.sh** -- flush DNS (restarts mDNSResponder)
+- **nasa-picture.sh** -- NASA astronomy pic of the day
+- **today-in-history.sh** -- what happened on this day (from Wikipedia)
+- **todays-word.sh** -- random word + definition
+- **random-article.sh** -- random Wikipedia page
+- **timer.sh** -- simple minute timer with notification
 
-| Script | Description |
-|--------|-------------|
-| [Clear Clipboard History](clear-copyboard.sh) | Clears the system clipboard contents. |
-| [Flush DNS Cache](flush-dns.sh) | Flushes the macOS DNS cache by restarting mDNSResponder. |
+## Setup
 
-### Development Tools
+Clone it, then in Raycast go to Settings > Extensions > Script Commands > Add Script Directory and point it at this folder.
 
-| Script | Description |
-|--------|-------------|
-| [Homebrew Maintenance](brew-maintenance.sh) | Updates, upgrades, cleans, and checks for issues with Homebrew packages. |
-| [Clean Development Caches](dev-cache-clean.sh) | Cleans all development caches: NPM, Watchman, Metro, CocoaPods, Xcode, and Gradle. |
+```bash
+git clone https://github.com/AnilBurcu/raycast-scripts.git
+```
 
-### Learning
-
-| Script | Description |
-|--------|-------------|
-| [Today's Word](todays-word.sh) | Displays a daily English word with its definition, pronunciation, and usage example. |
-| [Today in History](today-in-history.sh) | Shows notable historical events that happened on today's date. |
-| [NASA Picture of the Day](nasa-picture.sh) | Fetches and displays NASA's Astronomy Picture of the Day. |
-| [Random Wikipedia Article](random-article.sh) | Opens a random English Wikipedia article in the default browser. |
-
-### Productivity
-
-| Script | Description |
-|--------|-------------|
-| [Timer](timer.sh) | Sets a timer for a specified number of minutes and sends a macOS notification when done. |
-
-## Installation
-
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/AnilBurcu/raycast-scripts.git
-   ```
-
-2. Open Raycast Settings → Extensions → Script Commands → Add Script Directory.
-
-3. Select the cloned folder and you're good to go.
-
-## Requirements
-
-- macOS
-- [Raycast](https://raycast.com)
-- [Homebrew](https://brew.sh) (for `brew-maintenance.sh`)
+Needs [Homebrew](https://brew.sh) for the brew script, obviously.
 
 ## Author
 
-**Perikles** — [@AnilBurcu](https://github.com/AnilBurcu)
+Perikles ([@AnilBurcu](https://github.com/AnilBurcu))
 
-## License
-
-MIT
+MIT license.

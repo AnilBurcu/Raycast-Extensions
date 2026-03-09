@@ -11,12 +11,11 @@
 # @raycast.needsConfirmation true
 
 # Documentation:
-# @raycast.description Flushes the macOS DNS cache by restarting mDNSResponder.
+# @raycast.description Flush DNS cache
 # @raycast.author Perikles
 # @raycast.authorURL https://github.com/AnilBurcu
 
-# Flush DNS cache
 sudo /usr/bin/dscacheutil -flushcache
 sudo /usr/bin/killall -HUP mDNSResponder
 
-echo "🧹 DNS cache flushed!"
+echo "DNS cache flushed"

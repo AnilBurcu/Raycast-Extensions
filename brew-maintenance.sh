@@ -11,30 +11,31 @@
 # @raycast.currentDirectoryPath ~
 
 # Documentation:
-# @raycast.description Updates, upgrades, cleans, and checks for issues with Homebrew packages.
+# @raycast.description Update, upgrade & cleanup homebrew
 # @raycast.author Perikles
 # @raycast.authorURL https://github.com/AnilBurcu
 
-echo "--- 🍺 Homebrew Maintenance Starting ---"
+echo "Running brew maintenance..."
+echo ""
 
-# 1. Update Homebrew
-echo -e "\n--- 1/5: Updating Homebrew ---"
+echo "> brew update"
 brew update
 
-# 2. Upgrade Packages
-echo -e "\n--- 2/5: Upgrading Packages ---"
+echo ""
+echo "> brew upgrade"
 brew upgrade
 
-# 3. Cleanup Old Versions
-echo -e "\n--- 3/5: Cleaning Up Old Versions ---"
+echo ""
+echo "> brew cleanup"
 brew cleanup --prune=all
 
-# 4. Remove Unused Dependencies
-echo -e "\n--- 4/5: Removing Unused Dependencies ---"
+echo ""
+echo "> brew autoremove"
 brew autoremove
 
-# 5. Health Check
-echo -e "\n--- 5/5: Running Health Check ---"
+echo ""
+echo "> brew doctor"
 brew doctor
 
-echo -e "\n✅ Homebrew Maintenance Complete!"
+echo ""
+echo "Done."
