@@ -10,9 +10,10 @@
 # @raycast.icon 📚
 
 # Documentation:
-# @raycast.description Open a random Wikipedia article
+# @raycast.description Opens a random English Wikipedia article in the default browser.
 # @raycast.author Perikles
+# @raycast.authorURL https://github.com/AnilBurcu
 
-# Turkish Wikipedia
+# Open random English Wikipedia article
 open "https://en.wikipedia.org/wiki/Special:Random"
-echo "📚 Random English Wikipedia article opened!"
+echo "📚 Random Wikipedia article opened!"

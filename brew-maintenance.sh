@@ -13,6 +13,7 @@
 # Documentation:
 # @raycast.description Updates, upgrades, cleans, and checks for issues with Homebrew packages.
 # @raycast.author Perikles
+# @raycast.authorURL https://github.com/AnilBurcu
 
 echo "--- 🍺 Homebrew Maintenance Starting ---"
 
