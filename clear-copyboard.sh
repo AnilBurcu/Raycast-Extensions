@@ -1,12 +1,10 @@
 #!/bin/bash
 # @raycast.schemaVersion 1
-# @raycast.title Clear Clipboard
+# @raycast.title Clear Clipboard History
 # @raycast.mode silent
 # @raycast.packageName System
 # @raycast.icon 🧽
 
-# Clear clipboard
+# Sistem clipboard temizle
 pbcopy < /dev/null
 
-# Output
-echo "🧹 Clipboard cleared!"
