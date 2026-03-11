@@ -26,6 +26,6 @@ Needs [Homebrew](https://brew.sh) for the brew script, obviously.
 
 ## Author
 
-Perikles ([@AnilBurcu](https://github.com/AnilBurcu))
+([@AnilBurcu](https://github.com/AnilBurcu))
 
 MIT license.
