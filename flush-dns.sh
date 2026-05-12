@@ -7,7 +7,7 @@
 # @raycast.packageName System
 
 # Optional parameters:
-# @raycast.icon 🧹
+# @raycast.icon 📡
 # @raycast.needsConfirmation true
 
 # Documentation:
@@ -15,7 +15,9 @@
 # @raycast.author Perikles
 # @raycast.authorURL https://github.com/AnilBurcu
 
-sudo /usr/bin/dscacheutil -flushcache
-sudo /usr/bin/killall -HUP mDNSResponder
-
-echo "DNS cache flushed"
+if sudo /usr/bin/dscacheutil -flushcache && sudo /usr/bin/killall -HUP mDNSResponder; then
+    echo "✅ DNS cache flushed"
+else
+    echo "❌ Failed to flush DNS"
+    exit 1
+fi

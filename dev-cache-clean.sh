@@ -11,48 +11,170 @@
 # @raycast.currentDirectoryPath ~
 
 # Documentation:
-# @raycast.description Nuke dev caches (npm, pods, xcode, gradle, etc)
+# @raycast.description Nuke dev caches (npm, yarn, pods, xcode, gradle, expo, simulator, etc)
 # @raycast.author Perikles
 # @raycast.authorURL https://github.com/AnilBurcu
 
-echo "Cleaning dev caches..."
+# Helper: human-readable bytes
+human_readable() {
+    local bytes=$1
+    if [ "$bytes" -ge 1073741824 ]; then
+        awk -v b="$bytes" 'BEGIN { printf "%.2f GB", b/1073741824 }'
+    elif [ "$bytes" -ge 1048576 ]; then
+        awk -v b="$bytes" 'BEGIN { printf "%.2f MB", b/1048576 }'
+    elif [ "$bytes" -ge 1024 ]; then
+        awk -v b="$bytes" 'BEGIN { printf "%.2f KB", b/1024 }'
+    else
+        echo "${bytes} B"
+    fi
+}
+
+# Helper: total bytes used by a list of paths
+total_size_bytes() {
+    local total=0
+    for path in "$@"; do
+        if [ -e "$path" ]; then
+            local size
+            size=$(du -sk "$path" 2>/dev/null | awk '{print $1}')
+            if [ -n "$size" ]; then
+                total=$((total + size * 1024))
+            fi
+        fi
+    done
+    echo "$total"
+}
+
+# Paths to track
+PATHS=(
+    "$HOME/Library/Developer/Xcode/DerivedData"
+    "$HOME/Library/Caches/com.apple.dt.Xcode"
+    "$HOME/Library/Developer/CoreSimulator/Caches"
+    "$HOME/.gradle/caches"
+    "$HOME/.android/build-cache"
+    "$HOME/Library/Caches/CocoaPods"
+    "$HOME/.npm"
+    "$HOME/.yarn/cache"
+    "$HOME/.expo"
+)
+
+echo "🔍 Checking sizes before cleanup..."
 echo ""
 
+du -sh "${PATHS[@]}" 2>/dev/null
+
+BEFORE_BYTES=$(total_size_bytes "${PATHS[@]}")
+
+echo ""
+echo "🧹 Cleaning dev caches..."
+echo ""
+
+# ---------- Node / JS ----------
 if command -v npm &> /dev/null; then
-    echo "npm cache clean --force"
+    echo "→ npm cache clean --force"
     npm cache clean --force
 else
-    echo "npm not found, skipping"
+    echo "✗ npm not found, skipping"
 fi
 
+if command -v yarn &> /dev/null; then
+    echo "→ yarn cache clean"
+    yarn cache clean
+else
+    echo "✗ yarn not found, skipping"
+fi
+
+# ---------- Watchman ----------
 if command -v watchman &> /dev/null; then
-    echo "watchman watch-del-all"
+    echo "→ watchman watch-del-all"
     watchman watch-del-all
 else
-    echo "watchman not found, skipping"
+    echo "✗ watchman not found, skipping"
 fi
 
-echo "clearing metro/haste temp files"
-rm -rf "$TMPDIR"/metro-*
-rm -rf "$TMPDIR"/haste-map-*
+# ---------- Metro / Haste temp ----------
+if [ -n "$TMPDIR" ]; then
+    echo "→ clearing metro/haste temp files in \$TMPDIR"
+    rm -rf "$TMPDIR"/metro-*
+    rm -rf "$TMPDIR"/haste-map-*
+else
+    echo "✗ \$TMPDIR not set, skipping metro/haste cleanup"
+fi
 
+# ---------- Expo ----------
+if [ -d ~/.expo ]; then
+    echo "→ rm -rf ~/.expo"
+    rm -rf ~/.expo
+else
+    echo "✗ no ~/.expo folder, skipping"
+fi
+
+# ---------- CocoaPods ----------
 if command -v pod &> /dev/null; then
-    echo "pod cache clean --all"
+    echo "→ pod cache clean --all"
     pod cache clean --all
 else
-    echo "cocoapods not found, skipping"
+    echo "✗ cocoapods not found, skipping"
 fi
 
+# ---------- Xcode ----------
 if [ -d ~/Library/Developer/Xcode/DerivedData ]; then
-    echo "rm -rf DerivedData/*"
+    echo "→ rm -rf DerivedData/*"
     rm -rf ~/Library/Developer/Xcode/DerivedData/*
 else
-    echo "no DerivedData folder, skipping"
+    echo "✗ no DerivedData folder, skipping"
 fi
 
-echo "clearing gradle caches"
-rm -rf ~/.gradle/caches/
-rm -rf ~/.android/build-cache/
+if [ -d ~/Library/Caches/com.apple.dt.Xcode ]; then
+    echo "→ rm -rf Xcode caches"
+    rm -rf ~/Library/Caches/com.apple.dt.Xcode
+else
+    echo "✗ no Xcode cache folder, skipping"
+fi
+
+# ---------- iOS Simulator ----------
+if [ -d ~/Library/Developer/CoreSimulator/Caches ]; then
+    echo "→ rm -rf CoreSimulator caches"
+    rm -rf ~/Library/Developer/CoreSimulator/Caches/*
+else
+    echo "✗ no CoreSimulator caches folder, skipping"
+fi
+
+if command -v xcrun &> /dev/null; then
+    echo "→ xcrun simctl delete unavailable"
+    xcrun simctl delete unavailable
+else
+    echo "✗ xcrun not found, skipping"
+fi
+
+# ---------- Gradle / Android ----------
+if [ -d ~/.gradle/caches ]; then
+    echo "→ rm -rf ~/.gradle/caches"
+    rm -rf ~/.gradle/caches/
+else
+    echo "✗ no gradle caches folder, skipping"
+fi
+
+if [ -d ~/.android/build-cache ]; then
+    echo "→ rm -rf ~/.android/build-cache"
+    rm -rf ~/.android/build-cache/
+else
+    echo "✗ no android build-cache folder, skipping"
+fi
 
 echo ""
-echo "All done."
+echo "📊 Sizes after cleanup..."
+echo ""
+
+du -sh "${PATHS[@]}" 2>/dev/null
+
+AFTER_BYTES=$(total_size_bytes "${PATHS[@]}")
+FREED_BYTES=$((BEFORE_BYTES - AFTER_BYTES))
+
+echo ""
+echo "─────────────────────────────────────────"
+echo "📦 Before:  $(human_readable $BEFORE_BYTES)"
+echo "📦 After:   $(human_readable $AFTER_BYTES)"
+echo "🎉 Freed:   $(human_readable $FREED_BYTES)"
+echo "─────────────────────────────────────────"
+echo ""
+echo "✅ All done."
