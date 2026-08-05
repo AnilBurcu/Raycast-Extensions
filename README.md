@@ -19,7 +19,7 @@ My Raycast script commands. Mostly stuff I got tired of doing manually.
 Clone it, then in Raycast go to Settings > Extensions > Script Commands > Add Script Directory and point it at this folder.
 
 ```bash
-git clone https://github.com/AnilBurcu/raycast-scripts.git
+git clone https://github.com/AnilBurcu/Raycast-Extensions.git
 ```
 
 Needs [Homebrew](https://brew.sh) for the brew script, obviously.
