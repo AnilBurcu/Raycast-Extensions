@@ -15,25 +15,39 @@
 # @raycast.authorURL https://github.com/AnilBurcu
 
 API_KEY="DEMO_KEY"  # rate limited, get your own at api.nasa.gov
-RESPONSE=$(curl -s "https://api.nasa.gov/planetary/apod?api_key=$API_KEY")
+
+if ! command -v jq &> /dev/null; then
+    echo "jq is required (built into macOS 15+, or: brew install jq)"
+    exit 1
+fi
+
+RESPONSE=$(curl -sf --max-time 15 "https://api.nasa.gov/planetary/apod?api_key=$API_KEY")
 
 if [ -z "$RESPONSE" ]; then
     echo "Failed to reach NASA API"
     exit 1
 fi
 
-TITLE=$(echo "$RESPONSE" | grep -o '"title":"[^"]*' | cut -d'"' -f4)
-EXPLANATION=$(echo "$RESPONSE" | grep -o '"explanation":"[^"]*' | cut -d'"' -f4 | head -c 200)
-URL=$(echo "$RESPONSE" | grep -o '"url":"[^"]*' | cut -d'"' -f4)
-
-if [ -z "$URL" ]; then
-    echo "Couldn't parse response"
+if ! echo "$RESPONSE" | jq -e 'type == "object" and has("url")' >/dev/null 2>&1; then
+    ERR=$(echo "$RESPONSE" | jq -r '.error.message // .msg // "Could not parse response"' 2>/dev/null)
+    echo "${ERR:-Could not parse response}"
     exit 1
 fi
 
+TITLE=$(echo "$RESPONSE" | jq -r '.title // "Untitled"')
+DATE=$(echo "$RESPONSE" | jq -r '.date // ""')
+EXPLANATION=$(echo "$RESPONSE" | jq -r '.explanation // ""' | head -c 400)
+MEDIA=$(echo "$RESPONSE" | jq -r '.media_type // "image"')
+URL=$(echo "$RESPONSE" | jq -r '.hdurl // .url')
+
 echo "$TITLE"
+[ -n "$DATE" ] && echo "$DATE"
 echo ""
-echo "${EXPLANATION}..."
+echo "${EXPLANATION}..." | fold -s -w 70
 echo ""
+if [ "$MEDIA" != "image" ]; then
+    echo "($MEDIA)"
+fi
+echo "$URL"
 open "$URL"
 echo "Opened in browser"

@@ -24,6 +24,9 @@ fi
 
 SECS=$((MINUTES * 60))
 
-(sleep "$SECS" && osascript -e "display notification \"$MINUTES min timer done\" with title \"Timer\" sound name \"Glass\"") &
+# Fully detach the countdown: Raycast 2.x waits on the script's stdout/stderr
+# pipes, so the background job must not inherit them or the command hangs.
+nohup /bin/bash -c "sleep $SECS && /usr/bin/osascript -e 'display notification \"$MINUTES min timer done\" with title \"Timer\" sound name \"Glass\"'" >/dev/null 2>&1 &
+disown
 
 echo "Timer set: $MINUTES min"

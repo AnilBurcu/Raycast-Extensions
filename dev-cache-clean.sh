@@ -8,12 +8,26 @@
 
 # Optional parameters:
 # @raycast.icon 🧹
-# @raycast.currentDirectoryPath ~
+# @raycast.needsConfirmation true
 
 # Documentation:
 # @raycast.description Nuke dev caches (npm, yarn, pods, xcode, gradle, expo, simulator, etc)
 # @raycast.author Perikles
 # @raycast.authorURL https://github.com/AnilBurcu
+
+# Raycast 2.x runs scripts with a bare PATH (/usr/bin:/bin:/usr/sbin:/sbin).
+# Put Homebrew, rbenv shims (cocoapods) and user-local tools on PATH explicitly.
+for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    if [ -x "$brew_bin" ]; then
+        eval "$("$brew_bin" shellenv)"
+        break
+    fi
+done
+export PATH="$HOME/.rbenv/shims:$HOME/.local/bin:$PATH"
+
+# Raycast 2.x does not expand "~" in @raycast.currentDirectoryPath (spawn fails
+# with ENOENT), so the directive is gone and we cd here instead.
+cd "$HOME" || exit 1
 
 # Helper: human-readable bytes
 human_readable() {
@@ -92,12 +106,14 @@ else
 fi
 
 # ---------- Metro / Haste temp ----------
-if [ -n "$TMPDIR" ]; then
-    echo "→ clearing metro/haste temp files in \$TMPDIR"
-    rm -rf "$TMPDIR"/metro-*
-    rm -rf "$TMPDIR"/haste-map-*
+# Raycast does not export TMPDIR; fall back to the per-user temp dir.
+TMP_DIR="${TMPDIR:-$(getconf DARWIN_USER_TEMP_DIR 2>/dev/null)}"
+if [ -n "$TMP_DIR" ] && [ -d "$TMP_DIR" ]; then
+    echo "→ clearing metro/haste temp files in $TMP_DIR"
+    rm -rf "$TMP_DIR"/metro-*
+    rm -rf "$TMP_DIR"/haste-map-*
 else
-    echo "✗ \$TMPDIR not set, skipping metro/haste cleanup"
+    echo "✗ no temp dir found, skipping metro/haste cleanup"
 fi
 
 # ---------- Expo ----------
@@ -172,9 +188,9 @@ FREED_BYTES=$((BEFORE_BYTES - AFTER_BYTES))
 
 echo ""
 echo "─────────────────────────────────────────"
-echo "📦 Before:  $(human_readable $BEFORE_BYTES)"
-echo "📦 After:   $(human_readable $AFTER_BYTES)"
-echo "🎉 Freed:   $(human_readable $FREED_BYTES)"
+echo "📦 Before:  $(human_readable "$BEFORE_BYTES")"
+echo "📦 After:   $(human_readable "$AFTER_BYTES")"
+echo "🎉 Freed:   $(human_readable "$FREED_BYTES")"
 echo "─────────────────────────────────────────"
 echo ""
 echo "✅ All done."

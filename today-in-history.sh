@@ -14,6 +14,11 @@
 # @raycast.author Perikles
 # @raycast.authorURL https://github.com/AnilBurcu
 
+if ! command -v jq &> /dev/null; then
+    echo "jq is required (built into macOS 15+, or: brew install jq)"
+    exit 1
+fi
+
 MONTH=$(date +%-m)
 DAY=$(date +%-d)
 MONTH_NAME=$(date +%B)
@@ -22,27 +27,34 @@ echo "Today in History -- $MONTH_NAME $DAY"
 echo "========================================="
 echo ""
 
-RESPONSE=$(curl -s "https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/$MONTH/$DAY" \
+RESPONSE=$(curl -sf --max-time 15 "https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/$MONTH/$DAY" \
     -H "Accept: application/json" \
-    -H "User-Agent: RaycastScript/1.0")
+    -H "User-Agent: RaycastScript/1.0 (https://github.com/AnilBurcu/raycast-scripts)")
 
 if [ -z "$RESPONSE" ]; then
     echo "Couldn't fetch events from Wikipedia"
     exit 1
 fi
 
-YEARS=$(echo "$RESPONSE" | grep -o '"year":[0-9-]*' | head -5 | cut -d':' -f2)
-TEXTS=$(echo "$RESPONSE" | grep -o '"text":"[^"]*' | head -5 | cut -d'"' -f4)
+# Take the first 5 events, newest first, as "year<TAB>text" lines.
+EVENTS=$(echo "$RESPONSE" | jq -r '
+    (.events // [])
+    | map(select(.year != null and .text != null))
+    | .[:5]
+    | sort_by(-.year)
+    | .[]
+    | "\(.year)\t\(.text)"
+' 2>/dev/null)
 
-if [ -z "$YEARS" ]; then
+if [ -z "$EVENTS" ]; then
     echo "No events found"
     exit 1
 fi
 
-paste <(echo "$YEARS") <(echo "$TEXTS") | while IFS=$'\t' read -r year text; do
+while IFS=$'\t' read -r year text; do
     echo "[$year] $text" | fold -s -w 60
     echo ""
-done
+done <<< "$EVENTS"
 
 echo "---"
-echo "en.wikipedia.org/wiki/${MONTH_NAME}_${DAY}"
+echo "https://en.wikipedia.org/wiki/${MONTH_NAME}_${DAY}"

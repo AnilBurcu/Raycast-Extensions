@@ -8,12 +8,25 @@
 
 # Optional parameters:
 # @raycast.icon 🍺
-# @raycast.currentDirectoryPath ~
 
 # Documentation:
 # @raycast.description Update, upgrade (incl. greedy casks) & cleanup homebrew
 # @raycast.author Perikles
 # @raycast.authorURL https://github.com/AnilBurcu
+
+# Raycast 2.x runs scripts with a bare PATH (/usr/bin:/bin:/usr/sbin:/sbin),
+# so Homebrew has to be located and put on PATH explicitly.
+for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    if [ -x "$brew_bin" ]; then
+        eval "$("$brew_bin" shellenv)"
+        break
+    fi
+done
+export HOMEBREW_NO_ENV_HINTS=1
+
+# Raycast 2.x does not expand "~" in @raycast.currentDirectoryPath (spawn fails
+# with ENOENT), so the directive is gone and we cd here instead.
+cd "$HOME" || exit 1
 
 START_TIME=$(date +%s)
 
@@ -45,14 +58,14 @@ brew_cache_size() {
 }
 
 if ! command -v brew &> /dev/null; then
-    echo "❌ Homebrew not found"
+    echo "❌ Homebrew not found (looked in /opt/homebrew/bin and /usr/local/bin)"
     exit 1
 fi
 
 BEFORE_BYTES=$(brew_cache_size)
 
 echo "🍺 Running brew maintenance..."
-echo "📦 Cache size before: $(human_readable $BEFORE_BYTES)"
+echo "📦 Cache size before: $(human_readable "$BEFORE_BYTES")"
 echo ""
 
 echo "→ brew update"
@@ -81,10 +94,10 @@ ELAPSED=$((END_TIME - START_TIME))
 
 echo ""
 echo "─────────────────────────────────────────"
-echo "📦 Cache before: $(human_readable $BEFORE_BYTES)"
-echo "📦 Cache after:  $(human_readable $AFTER_BYTES)"
+echo "📦 Cache before: $(human_readable "$BEFORE_BYTES")"
+echo "📦 Cache after:  $(human_readable "$AFTER_BYTES")"
 if [ "$FREED_BYTES" -gt 0 ]; then
-    echo "🎉 Freed:        $(human_readable $FREED_BYTES)"
+    echo "🎉 Freed:        $(human_readable "$FREED_BYTES")"
 fi
 echo "⏱  Took:         ${ELAPSED}s"
 echo "─────────────────────────────────────────"
