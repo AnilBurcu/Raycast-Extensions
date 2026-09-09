@@ -29,7 +29,7 @@ echo ""
 
 RESPONSE=$(curl -sf --max-time 15 "https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/$MONTH/$DAY" \
     -H "Accept: application/json" \
-    -H "User-Agent: RaycastScript/1.0 (https://github.com/AnilBurcu/raycast-scripts)")
+    -H "User-Agent: RaycastScript/1.0 (https://github.com/AnilBurcu/Raycast-Extensions)")
 
 if [ -z "$RESPONSE" ]; then
     echo "Couldn't fetch events from Wikipedia"
