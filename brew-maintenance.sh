@@ -62,27 +62,62 @@ if ! command -v brew &> /dev/null; then
     exit 1
 fi
 
-BEFORE_BYTES=$(brew_cache_size)
+# Each brew step is logged so a failure's reason can be repeated in the summary.
+LOG=$(mktemp -t brew-maintenance) || exit 1
+trap 'rm -f "$LOG"' EXIT
+FAILURES=()
+
+run_brew() {
+    brew "$@" 2>&1 | tee "$LOG"
+    return "${PIPESTATUS[0]}"
+}
+
+record_failure() {
+    local reason
+    reason=$(grep -m1 '^Error:' "$LOG")
+    FAILURES+=("$1${reason:+: ${reason#Error: }}")
+}
 
 echo "🍺 Running brew maintenance..."
-echo "📦 Cache size before: $(human_readable "$BEFORE_BYTES")"
 echo ""
 
 echo "→ brew update"
-brew update
+run_brew update || record_failure "brew update"
 
 echo ""
 echo "→ brew upgrade --greedy (includes auto-updating casks)"
-brew upgrade --greedy
+if ! run_brew upgrade --greedy; then
+    # Some errors make Homebrew exit before the rest of the queue is installed,
+    # e.g. a formula without a bottle (supabase) while Xcode is older than
+    # Homebrew's minimum. Retry whatever is still outdated one at a time so a
+    # single bad package doesn't hold back git & co.
+    REMAINING=$(brew outdated --greedy --quiet 2>/dev/null)
+    if [ -z "$REMAINING" ]; then
+        record_failure "brew upgrade"
+    else
+        echo ""
+        echo "⚠️  brew upgrade stopped early, retrying the rest one by one"
+        for pkg in $REMAINING; do
+            echo ""
+            echo "→ brew upgrade --greedy $pkg"
+            run_brew upgrade --greedy "$pkg" || record_failure "$pkg"
+        done
+    fi
+fi
+
+# Measured here rather than at start, so bottles downloaded by the upgrade
+# count towards what cleanup frees.
+BEFORE_BYTES=$(brew_cache_size)
 
 echo ""
 echo "→ brew cleanup --prune=all"
-brew cleanup --prune=all
+run_brew cleanup --prune=all || record_failure "brew cleanup"
 
 echo ""
 echo "→ brew autoremove"
-brew autoremove
+run_brew autoremove || record_failure "brew autoremove"
 
+# doctor exits non-zero whenever it has a warning, so it is informational only.
 echo ""
 echo "→ brew doctor"
 brew doctor
@@ -94,12 +129,21 @@ ELAPSED=$((END_TIME - START_TIME))
 
 echo ""
 echo "─────────────────────────────────────────"
-echo "📦 Cache before: $(human_readable "$BEFORE_BYTES")"
-echo "📦 Cache after:  $(human_readable "$AFTER_BYTES")"
+echo "📦 Cache before cleanup: $(human_readable "$BEFORE_BYTES")"
+echo "📦 Cache after cleanup:  $(human_readable "$AFTER_BYTES")"
 if [ "$FREED_BYTES" -gt 0 ]; then
-    echo "🎉 Freed:        $(human_readable "$FREED_BYTES")"
+    echo "🎉 Freed:                $(human_readable "$FREED_BYTES")"
 fi
-echo "⏱  Took:         ${ELAPSED}s"
+echo "⏱  Took:                 ${ELAPSED}s"
 echo "─────────────────────────────────────────"
 echo ""
+
+if [ ${#FAILURES[@]} -gt 0 ]; then
+    echo "⚠️  Finished with errors:"
+    for failure in "${FAILURES[@]}"; do
+        echo "   • $failure"
+    done
+    exit 1
+fi
+
 echo "✅ Done."
